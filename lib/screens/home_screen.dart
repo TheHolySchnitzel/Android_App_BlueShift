@@ -31,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 colors: [
                   const Color(0xFF0A0E21),
                   const Color(0xFF191E29),
-                  bt.isPowerOn ? bt.currentColor.withOpacity(0.1) : const Color(0xFF0A0E21),
+                  bt.isPowerOn ? bt.currentColor.withAlpha(25) : const Color(0xFF0A0E21),
                 ],
               ),
             ),
@@ -98,9 +98,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withAlpha(12),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Colors.white.withAlpha(25)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -167,11 +167,11 @@ class _HomeScreenState extends State<HomeScreen> {
               label: const Text('Trennen'),
               style: TextButton.styleFrom(
                 foregroundColor: Colors.red,
-                backgroundColor: Colors.red.withOpacity(0.1),
+                backgroundColor: Colors.red.withAlpha(25),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(color: Colors.red.withOpacity(0.3)),
+                  side: BorderSide(color: Colors.red.withAlpha(76)),
                 ),
               ),
             ),
@@ -222,12 +222,12 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: enabled
-                ? [color.withOpacity(0.3), color.withOpacity(0.1)]
-                : [Colors.grey.withOpacity(0.1), Colors.grey.withOpacity(0.05)],
+                ? [color.withAlpha(76), color.withAlpha(25)]
+                : [Colors.grey.withAlpha(25), Colors.grey.withAlpha(12)],
           ),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: enabled ? color.withOpacity(0.3) : Colors.grey.withOpacity(0.2),
+            color: enabled ? color.withAlpha(76) : Colors.grey.withAlpha(51),
             width: 1.5,
           ),
         ),
@@ -237,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: enabled ? color.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
+                color: enabled ? color.withAlpha(51) : Colors.grey.withAlpha(25),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: enabled ? color : Colors.grey, size: 28),

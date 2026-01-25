@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../services/bluetooth_service.dart';
+import '../services/bluetooth_service.dart';
 
 class ScenesScreen extends StatelessWidget {
   const ScenesScreen({super.key});
@@ -36,24 +36,24 @@ class ScenesScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [(s['color'] as Color).withOpacity(0.3), (s['color'] as Color).withOpacity(0.1)],
+                          colors: [(s['color'] as Color).withAlpha(76), (s['color'] as Color).withAlpha(25)],
                         ),
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: (s['color'] as Color).withOpacity(0.5), width: 1.5),
+                        border: Border.all(color: (s['color'] as Color).withAlpha(127), width: 1.5),
                       ),
                       child: Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: (s['color'] as Color).withOpacity(0.3),
+                              color: (s['color'] as Color).withAlpha(76),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Icon(s['icon'] as IconData, color: s['color'] as Color, size: 32),
                           ),
                           const SizedBox(width: 20),
                           Expanded(child: Text(s['name'] as String, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600))),
-                          Icon(Icons.chevron_right, color: (s['color'] as Color).withOpacity(0.7)),
+                          Icon(Icons.chevron_right, color: (s['color'] as Color).withAlpha(178)),
                         ],
                       ),
                     ),
