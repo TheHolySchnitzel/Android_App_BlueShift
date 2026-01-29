@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-
 import 'screens/home_screen.dart';
 import 'services/bluetooth_service.dart';
 
@@ -16,7 +15,7 @@ class BlueShiftApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<BluetoothService>(
+    return ChangeNotifierProvider(
       create: (_) => BluetoothService(),
       child: MaterialApp(
         title: 'BlueShift',

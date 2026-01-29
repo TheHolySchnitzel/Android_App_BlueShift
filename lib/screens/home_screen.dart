@@ -60,7 +60,6 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             children: [
-              // BlueShift Logo - animiert
               Expanded(
                 child: ShaderMask(
                   shaderCallback: (bounds) => const LinearGradient(
@@ -76,80 +75,41 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 2000.ms),
               ),
-
-              // Status - FESTE Position, FESTE Breite
+              if (bt.isConnected)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  child: Material(
+                    color: Colors.red.withAlpha(25),
+                    shape: const CircleBorder(
+                      side: BorderSide(color: Colors.red, width: 1.5),
+                    ),
+                    child: InkWell(
+                      onTap: bt.disconnect,
+                      customBorder: const CircleBorder(),
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.red,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               SizedBox(
-                width: 130,
+                width: 110,
                 child: ConnectionStatus(bt: bt),
               ),
             ],
           ),
-
-          if (bt.isConnected) ...[
-            const SizedBox(height: 12),
-            _buildQuickStats(bt),
-          ],
         ],
       ),
     );
   }
 
-  Widget _buildQuickStats(BluetoothService bt) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withAlpha(12),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withAlpha(25)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _statItem(
-              Icons.speed,
-              bt.dataRate > 0 ? '${bt.dataRate.toStringAsFixed(2)} KB/s' : '--',
-              const Color(0xFF00D9FF)
-          ),
-          Container(width: 1, height: 24, color: Colors.white10),
-          _statItem(
-              Icons.wifi,
-              bt.signalStrength != 0 ? '${bt.signalStrength} dBm' : '--',
-              const Color(0xFF8B5CF6)
-          ),
-          Container(width: 1, height: 24, color: Colors.white10),
-          _statItem(
-              Icons.power,
-              bt.powerConsumption > 0 ? '${bt.powerConsumption}W' : '--',
-              const Color(0xFF10B981)
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _statItem(IconData icon, String value, Color color) {
-    return Expanded(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 16),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              value,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildContent(BluetoothService bt) {
     return SingleChildScrollView(
@@ -157,27 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         children: [
           const SizedBox(height: 8),
-
-          // Trenn-Button HIER - über dem Hauptschalter
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: bt.disconnect,
-              icon: const Icon(Icons.link_off, size: 18),
-              label: const Text('Trennen'),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
-                backgroundColor: Colors.red.withAlpha(25),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(color: Colors.red.withAlpha(76)),
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 12),
+          // Trennen-Button entfernt (jetzt im Header)
           PowerSwitch(bt: bt),
           const SizedBox(height: 16),
           BrightnessSlider(bt: bt),
@@ -188,6 +128,10 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+
+
+
 
   Widget _buildGrid(BluetoothService bt) {
     final enabled = bt.isPowerOn;
@@ -262,32 +206,52 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Bluetooth-Icon-Button mit Text
-          ElevatedButton.icon(
-            onPressed: bt.isScanning ? null : () => bt.scanAndConnect(),
-            icon: bt.isScanning
-                ? const SizedBox(
-              width: 20,
-              height: 20,
+          if (bt.isScanning) ...[
+            const SizedBox(
+              width: 60,
+              height: 60,
               child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            )
-                : const Icon(Icons.bluetooth, size: 28),
-            label: Text(
-              bt.isScanning ? 'Suche...' : 'Verbinden',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00D9FF),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+                strokeWidth: 4,
+                color: Color(0xFF00D9FF),
               ),
             ),
-          ),
+            const SizedBox(height: 16),
+            Text(
+              bt.connectionStatus,
+              style: const TextStyle(color: Colors.white70, fontSize: 16),
+            ),
+            const SizedBox(height: 24),
+            TextButton.icon(
+              onPressed: () => bt.cancelScan(),
+              icon: const Icon(Icons.close, size: 20),
+              label: const Text('Abbrechen'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+                backgroundColor: Colors.red.withAlpha(25),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ] else ...[
+            ElevatedButton.icon(
+              onPressed: () => bt.scanAndConnect(),
+              icon: const Icon(Icons.bluetooth, size: 28),
+              label: const Text(
+                'Verbinden',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00D9FF),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

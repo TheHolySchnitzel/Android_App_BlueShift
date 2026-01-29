@@ -8,33 +8,37 @@ class ConnectionStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isConnected = bt.isConnected;
+    final color = isConnected ? const Color(0xFF10B981) : Colors.red;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: bt.isConnected
-            ? const Color(0xFF10B981).withOpacity(0.2)
-            : Colors.red.withOpacity(0.2),
+        color: color.withAlpha(25),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: bt.isConnected ? const Color(0xFF10B981) : Colors.red,
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withAlpha(76)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            bt.isConnected ? Icons.bluetooth_connected : Icons.bluetooth_disabled,
-            color: bt.isConnected ? const Color(0xFF10B981) : Colors.red,
-            size: 20,
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            bt.isConnected ? 'Verbunden' : 'Getrennt',
-            style: TextStyle(
-              color: bt.isConnected ? const Color(0xFF10B981) : Colors.red,
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              bt.connectionStatus,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
