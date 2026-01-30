@@ -39,7 +39,7 @@ class _TimerScreenState extends State<TimerScreen> {
           _remainingSeconds--;
         } else {
           _stopTimer(bt);
-          bt.togglePower(); // LED ausschalten wenn Timer abläuft
+          bt.togglePower(); // LED ausschalten wenn Timer ablÃ¤uft
         }
       });
     });
@@ -311,7 +311,7 @@ class _TimerScreenState extends State<TimerScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'LED schaltet sich automatisch aus, wenn der Timer abläuft',
+              'LED schaltet sich automatisch aus, wenn der Timer ablÃ¤uft',
               style: TextStyle(
                 fontSize: 13,
                 color: Colors.white.withAlpha(179),

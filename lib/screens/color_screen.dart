@@ -18,7 +18,7 @@ class _ColorScreenState extends State<ColorScreen> {
       builder: (context, bt, _) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Farbe wählen'),
+            title: const Text('Farbe wÃ¤hlen'),
             backgroundColor: const Color(0xFF191E29),
           ),
           body: Container(
@@ -35,7 +35,7 @@ class _ColorScreenState extends State<ColorScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Vorschau der ausgewählten Farbe
+                        // Vorschau der ausgewÃ¤hlten Farbe
                         Container(
                           height: 200,
                           decoration: BoxDecoration(
