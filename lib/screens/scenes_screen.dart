@@ -53,8 +53,10 @@ class ScenesScreen extends StatelessWidget {
   }
 
   Widget _buildBlueShiftMode(BuildContext context, BluetoothService bt) {
+    final isActive = bt.activeMode == "BlueShift"; // NEU: Check ob aktiv
+
     return Container(
-      height: 100, // gleich wie _buildSceneCard
+      height: 100,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF00D9FF), Color(0xFF8B5CF6)],
@@ -63,14 +65,24 @@ class ScenesScreen extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: const Color(0xFF00D9FF).withAlpha(120), width: 1.5),
+          color: const Color(0xFF00D9FF).withAlpha(120),
+          width: isActive ? 2.5 : 1.5, // NEU: Dichere Border wenn aktiv
+        ),
+        boxShadow: isActive
+            ? [
+          BoxShadow(
+            color: const Color(0xFF00D9FF).withAlpha(102),
+            blurRadius: 12,
+            spreadRadius: 2,
+          ),
+        ]
+            : [], // NEU: Glow wenn aktiv
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            // TODO: BlueShift Mode aktivieren
-            bt.setColor(const Color(0xFF00D9FF));
+            bt.setMode("BlueShift");
           },
           borderRadius: BorderRadius.circular(20),
           child: Padding(
@@ -90,21 +102,46 @@ class ScenesScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 20),
-                const Expanded(
+                Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'BlueShift Mode',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                      Row(
+                        children: [
+                          const Text(
+                            'BlueShift Mode',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          if (isActive) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withAlpha(76),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Text(
+                                'Aktiv',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF00D9FF),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                      SizedBox(height: 4),
-                      Text(
+                      const SizedBox(height: 4),
+                      const Text(
                         'Intelligente Lichtsteuerung',
                         style: TextStyle(
                           fontSize: 13,
@@ -122,12 +159,16 @@ class ScenesScreen extends StatelessWidget {
     );
   }
 
+// Bei den anderen Szenen auch setMode hinzufügen:
   Widget _buildSceneCard(BuildContext context,
       BluetoothService bt,
       String title,
       IconData icon,
       Color color,
       Color lightColor,) {
+    final isActive = bt.activeMode ==
+        title; // NEU: Check ob diese Szene aktiv ist
+
     return Container(
       height: 100,
       decoration: BoxDecoration(
@@ -135,13 +176,25 @@ class ScenesScreen extends StatelessWidget {
           colors: [color.withAlpha(76), color.withAlpha(25)],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withAlpha(76), width: 1.5),
+        border: Border.all(
+          color: color.withAlpha(76),
+          width: isActive ? 2.5 : 1.5, // NEU: Dickere Border wenn aktiv
+        ),
+        boxShadow: isActive
+            ? [
+          BoxShadow(
+            color: color.withAlpha(102),
+            blurRadius: 12,
+            spreadRadius: 2,
+          ),
+        ]
+            : [],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            bt.setColor(lightColor);
+            bt.setMode(title);
           },
           borderRadius: BorderRadius.circular(20),
           child: Padding(
@@ -158,13 +211,44 @@ class ScenesScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 20),
                 Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          if (isActive) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: color.withAlpha(76),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                'Aktiv',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: color,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ],

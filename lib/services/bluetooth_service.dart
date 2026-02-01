@@ -8,27 +8,48 @@ class BluetoothService extends ChangeNotifier {
 
   fbp.BluetoothDevice? _connectedDevice;
   fbp.BluetoothCharacteristic? _charCommand;
-
   bool _isConnected = false;
   bool _isScanning = false;
   String _connectionStatus = "Getrennt";
-
   bool _isPowerOn = false;
   double _brightness = 100.0;
   Color _currentColor = Colors.white;
-
+  String _activeMode = "BlueShift"; // NEU: Aktiver Modus
   StreamSubscription? _connectionSubscription;
 
   bool get isConnected => _isConnected;
   bool get isScanning => _isScanning;
   String get connectionStatus => _connectionStatus;
-
   bool get isPowerOn => _isPowerOn;
   double get brightness => _brightness;
   Color get currentColor => _currentColor;
+  String get activeMode => _activeMode; // NEU: Getter für Modus
 
   BluetoothService() {
     _initBluetooth();
+    _setBlueShiftMode(); // NEU: BlueShift von Anfang an aktiv
+  }
+
+  // NEU: Aktiviert BlueShift Modus
+  Future _setBlueShiftMode() async {
+    _activeMode = "BlueShift";
+    _currentColor = const Color(0xFF00D9FF); // Cyan/BlueShift Farbe
+    notifyListeners();
+  }
+
+  // NEU: Ändert Modus
+  Future setMode(String mode) async {
+    _activeMode = mode;
+    notifyListeners();
+
+    // Optional: Farbe je nach Modus setzen
+    if (mode == "Entspannung") {
+      await setColor(Color.fromARGB(255, 139, 92, 246));
+    } else if (mode == "Konzentration") {
+      await setColor(Colors.white);
+    } else if (mode == "BlueShift") {
+      await setColor(const Color(0xFF00D9FF));
+    }
   }
 
   Future<void> _initBluetooth() async {
@@ -180,6 +201,20 @@ class BluetoothService extends ChangeNotifier {
         await _charCommand!.write(cmd.codeUnits, withoutResponse: false);
       } catch (_) {}
     }
+  }
+
+  Future setColorTemperature(int kelvin) async {
+    // Hier das Protokoll mit deinem ESP abstimmen, z.B.:
+    await _sendCommand('CCT:$kelvin');
+  }
+
+  // NEU: Schedule-Daten lokal speichern (später in SharedPreferences)
+  Map<String, List<String>> _weeklySchedule = {};
+
+  Future setSchedule(String scheduleString) async {
+    // z.B. "Mo:07:00,23:00;Di:07:00,23:00;..."
+    await _sendCommand('SCHEDULE:$scheduleString');
+    notifyListeners();
   }
 
   @override

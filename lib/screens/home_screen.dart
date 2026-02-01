@@ -5,10 +5,10 @@ import '../services/bluetooth_service.dart';
 import '../widgets/connection_status.dart';
 import '../widgets/power_switch.dart';
 import '../widgets/brightness_slider.dart';
-import 'color_screen.dart';
+import 'color_temperature_screen.dart';
 import 'scenes_screen.dart';
 import 'timer_screen.dart';
-import 'room_screen.dart';
+import 'schedule_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -117,11 +117,12 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         children: [
           const SizedBox(height: 8),
-          // Trennen-Button entfernt (jetzt im Header)
           PowerSwitch(bt: bt),
+          const SizedBox(height: 12),
+          _buildTodayTomorrowInfo(), // Kleine Anzeige
           const SizedBox(height: 16),
           BrightnessSlider(bt: bt),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           _buildGrid(bt),
           const SizedBox(height: 16),
         ],
@@ -129,9 +130,61 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
-
-
+// NEU: Nur Visualisierung für heute/morgen, NICHT editierbar
+  Widget _buildTodayTomorrowInfo() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(10),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withAlpha(25)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.schedule, color: Color(0xFF00D9FF), size: 18),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Heute: Aufstehen 07:00, Schlafen 23:00',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Morgen: Aufstehen 07:00, Schlafen 23:00',
+                  style: TextStyle(
+                    color: Colors.white38,
+                    fontSize: 10,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context, // KORREKT: Den lokalen BuildContext verwenden
+                MaterialPageRoute(builder: (_) => const ScheduleScreen()),
+              );
+            },
+            child: const Icon(
+              Icons.chevron_right,
+              color: Colors.white54,
+              size: 18,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildGrid(BluetoothService bt) {
     final enabled = bt.isPowerOn;
@@ -143,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisSpacing: 12,
       childAspectRatio: 1.15,
       children: [
-        _gridCard('Farben', Icons.palette, const Color(0xFFFF6B9D), enabled, () {
+        _gridCard('Farbtemperatur', Icons.tonality, const Color(0xFFFF6B9D), enabled, () {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const ColorScreen()));
         }),
         _gridCard('Szenen', Icons.auto_awesome, const Color(0xFF8B5CF6), enabled, () {
@@ -152,8 +205,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _gridCard('Timer', Icons.timer, const Color(0xFF10B981), enabled, () {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const TimerScreen()));
         }),
-        _gridCard('Raum', Icons.grid_view, const Color(0xFF00D9FF), enabled, () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const RoomScreen()));
+        _gridCard('Plan', Icons.schedule, const Color(0xFF00D9FF), enabled, () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const ScheduleScreen()));
         }),
       ],
     );
