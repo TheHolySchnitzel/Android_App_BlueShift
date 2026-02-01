@@ -6,221 +6,152 @@ class BluetoothService extends ChangeNotifier {
   static const String serviceUUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
   static const String charCommandUUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 
-  fbp.BluetoothDevice? _connectedDevice;
-  fbp.BluetoothCharacteristic? _charCommand;
-  bool _isConnected = false;
-  bool _isScanning = false;
-  String _connectionStatus = "Getrennt";
-  bool _isPowerOn = false;
-  double _brightness = 100.0;
-  Color _currentColor = Colors.white;
-  String _activeMode = "BlueShift"; // NEU: Aktiver Modus
-  StreamSubscription? _connectionSubscription;
+  fbp.BluetoothDevice? _device;
+  fbp.BluetoothCharacteristic? _charCmd;
 
-  bool get isConnected => _isConnected;
-  bool get isScanning => _isScanning;
-  String get connectionStatus => _connectionStatus;
-  bool get isPowerOn => _isPowerOn;
+  bool _scanning = false;
+  bool _powerOn = false;
+  double _brightness = 100.0;
+  Color _color = const Color(0xFF00D9FF);
+  String _mode = "BlueShift";
+  String _status = "Getrennt";
+
+  // ZENTRALE DATEN FÜR DEN WOCHENPLAN
+  // Key: Tag, Value: [Start, Ende, Active("true"/"false")]
+  Map<String, List<String>> _weeklySchedule = {
+    'Mo': ['07:00', '23:00', 'true'],
+    'Di': ['07:00', '23:00', 'true'],
+    'Mi': ['07:00', '23:00', 'true'],
+    'Do': ['07:00', '23:00', 'true'],
+    'Fr': ['07:00', '23:00', 'true'],
+    'Sa': ['09:00', '00:00', 'true'],
+    'So': ['10:00', '23:00', 'true'],
+  };
+
+  // Getters
+  bool get isConnected => _device?.isConnected ?? false;
+  bool get isScanning => _scanning;
+  String get connectionStatus => _status;
+  bool get isPowerOn => _powerOn;
   double get brightness => _brightness;
-  Color get currentColor => _currentColor;
-  String get activeMode => _activeMode; // NEU: Getter für Modus
+  Color get currentColor => _color;
+  String get activeMode => _mode;
+  Map<String, List<String>> get weeklySchedule => _weeklySchedule;
 
   BluetoothService() {
-    _initBluetooth();
-    _setBlueShiftMode(); // NEU: BlueShift von Anfang an aktiv
+    // _initBluetooth(); // Nicht zwingend nötig wenn scanAndConnect alles macht
   }
 
-  // NEU: Aktiviert BlueShift Modus
-  Future _setBlueShiftMode() async {
-    _activeMode = "BlueShift";
-    _currentColor = const Color(0xFF00D9FF); // Cyan/BlueShift Farbe
-    notifyListeners();
-  }
-
-  // NEU: Ändert Modus
-  Future setMode(String mode) async {
-    _activeMode = mode;
-    notifyListeners();
-
-    // Optional: Farbe je nach Modus setzen
-    if (mode == "Entspannung") {
-      await setColor(Color.fromARGB(255, 139, 92, 246));
-    } else if (mode == "Konzentration") {
-      await setColor(Colors.white);
-    } else if (mode == "BlueShift") {
-      await setColor(const Color(0xFF00D9FF));
-    }
-  }
-
-  Future<void> _initBluetooth() async {
-    try {
-      await fbp.FlutterBluePlus.isSupported;
-    } catch (e) {
-      debugPrint('BLE Init Error: $e');
-    }
-  }
-
-  Future<void> scanAndConnect() async {
-    _isScanning = true;
-    _connectionStatus = "Suche...";
+  Future scanAndConnect() async {
+    _scanning = true;
+    _status = "Suche...";
     notifyListeners();
 
     try {
-      StreamSubscription? scanSubscription;
-      bool deviceFound = false;
+      await fbp.FlutterBluePlus.startScan(timeout: const Duration(seconds: 5));
 
-      scanSubscription = fbp.FlutterBluePlus.scanResults.listen((results) async {
-        if (deviceFound) return;
-
+      fbp.FlutterBluePlus.scanResults.listen((results) async {
         for (final r in results) {
-          final name = r.device.platformName;
-          if (name.contains('BlueShift') || name.contains('ESP32')) {
-            deviceFound = true;
+          if (r.device.platformName.contains('BlueShift') || r.device.platformName.contains('ESP32')) {
             await fbp.FlutterBluePlus.stopScan();
-            await scanSubscription?.cancel();
-
-            _connectionStatus = "Verbinde...";
+            _status = "Verbinde...";
             notifyListeners();
-
-            await connectToDevice(r.device);
+            await _connect(r.device);
             return;
           }
         }
       });
 
-      await fbp.FlutterBluePlus.startScan(
-        timeout: const Duration(seconds: 10),
-        androidUsesFineLocation: true,
-      );
-
-      await Future.delayed(const Duration(seconds: 10));
-
-      if (!deviceFound) {
-        await scanSubscription?.cancel();
-        _connectionStatus = "Nicht gefunden";
-        _isScanning = false;
+      await Future.delayed(const Duration(seconds: 6));
+      if (!isConnected) {
+        _status = "Nicht gefunden";
+        _scanning = false;
         notifyListeners();
       }
     } catch (e) {
-      _connectionStatus = "Fehler";
-      _isScanning = false;
+      _status = "Fehler";
+      _scanning = false;
       notifyListeners();
     }
   }
 
-  Future<void> cancelScan() async {
+  Future _connect(fbp.BluetoothDevice device) async {
     try {
-      await fbp.FlutterBluePlus.stopScan();
-    } catch (_) {}
-    _isScanning = false;
-    _connectionStatus = "Abgebrochen";
-    notifyListeners();
-  }
-
-  Future<void> connectToDevice(fbp.BluetoothDevice device) async {
-    try {
-      await device.connect(
-        timeout: const Duration(seconds: 15),
-        autoConnect: false,
-      );
-
-      _connectedDevice = device;
-      await Future.delayed(const Duration(milliseconds: 500));
+      await device.connect(autoConnect: false);
+      _device = device;
 
       final services = await device.discoverServices();
-      for (var service in services) {
-        if (service.uuid.toString().toLowerCase() == serviceUUID.toLowerCase()) {
-          for (var char in service.characteristics) {
-            if (char.uuid.toString().toLowerCase() == charCommandUUID.toLowerCase()) {
-              _charCommand = char;
+      for (var s in services) {
+        if (s.uuid.toString() == serviceUUID) {
+          for (var c in s.characteristics) {
+            if (c.uuid.toString() == charCommandUUID) {
+              _charCmd = c;
+              _status = "Verbunden";
+              _scanning = false;
+
+              device.connectionState.listen((state) {
+                if (state == fbp.BluetoothConnectionState.disconnected) disconnect();
+              });
+
+              notifyListeners();
+              return;
             }
           }
         }
       }
-
-      _isConnected = true;
-      _isScanning = false;
-      _connectionStatus = "Verbunden";
-
-      _connectionSubscription = device.connectionState.listen((state) {
-        if (state == fbp.BluetoothConnectionState.disconnected) {
-          _handleDisconnect();
-        }
-      });
-
-      notifyListeners();
     } catch (e) {
-      _connectionStatus = "Fehler";
-      _isConnected = false;
-      _isScanning = false;
-      notifyListeners();
+      disconnect();
     }
   }
 
-  Future<void> disconnect() async {
-    if (_connectedDevice != null) {
-      try {
-        await _connectedDevice!.disconnect();
-      } catch (_) {}
-    }
-    _handleDisconnect();
-  }
-
-  void _handleDisconnect() {
-    _connectedDevice = null;
-    _isConnected = false;
-    _connectionStatus = "Getrennt";
-
-    _connectionSubscription?.cancel();
-    _connectionSubscription = null;
-
+  Future disconnect() async {
+    try { await _device?.disconnect(); } catch (_) {}
+    _device = null;
+    _status = "Getrennt";
+    _scanning = false;
     notifyListeners();
   }
 
-  Future<void> togglePower() async {
-    _isPowerOn = !_isPowerOn;
+  Future togglePower() async {
+    _powerOn = !_powerOn;
     notifyListeners();
-    await _sendCommand(_isPowerOn ? 'LED_ON' : 'LED_OFF');
+    await _send(_powerOn ? 'LED_ON' : 'LED_OFF');
   }
 
-  Future<void> setBrightness(double value) async {
-    _brightness = value;
+  Future setBrightness(double v) async {
+    _brightness = v;
     notifyListeners();
-    await _sendCommand('BRIGHT:${value.toInt()}');
+    await _send('BRIGHT:${v.toInt()}');
   }
 
-  Future<void> setColor(Color color) async {
-    _currentColor = color;
+  Future setMode(String mode) async {
+    _mode = mode;
     notifyListeners();
-    await _sendCommand('COLOR:${color.red},${color.green},${color.blue}');
-  }
-
-  Future<void> _sendCommand(String cmd) async {
-    if (_charCommand != null && _isConnected) {
-      try {
-        await _charCommand!.write(cmd.codeUnits, withoutResponse: false);
-      } catch (_) {}
-    }
+    if (mode == "BlueShift") _color = const Color(0xFF00D9FF);
   }
 
   Future setColorTemperature(int kelvin) async {
-    // Hier das Protokoll mit deinem ESP abstimmen, z.B.:
-    await _sendCommand('CCT:$kelvin');
+    await _send('CCT:$kelvin');
   }
 
-  // NEU: Schedule-Daten lokal speichern (später in SharedPreferences)
-  Map<String, List<String>> _weeklySchedule = {};
-
-  Future setSchedule(String scheduleString) async {
-    // z.B. "Mo:07:00,23:00;Di:07:00,23:00;..."
-    await _sendCommand('SCHEDULE:$scheduleString');
+  // Update Methode für den Schedule
+  Future updateSchedule(Map<String, List<String>> newSchedule) async {
+    // 1. Lokal speichern
+    _weeklySchedule = Map.from(newSchedule);
     notifyListeners();
+
+    // 2. String für ESP bauen
+    final str = _weeklySchedule.entries.map((e) {
+      String active = e.value[2] == 'true' ? '1' : '0';
+      return '${e.key}:${e.value[0]},${e.value[1]},$active';
+    }).join(';');
+
+    await _send('SCHEDULE:$str');
   }
 
-  @override
-  void dispose() {
-    _connectionSubscription?.cancel();
-    disconnect();
-    super.dispose();
+  Future _send(String cmd) async {
+    if (_charCmd != null && isConnected) {
+      try { await _charCmd!.write(cmd.codeUnits); } catch (_) {}
+    }
   }
 }

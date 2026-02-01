@@ -11,21 +11,24 @@ class ScheduleScreen extends StatefulWidget {
 }
 
 class _ScheduleScreenState extends State<ScheduleScreen> {
-  // Format: "HH:MM", "HH:MM", "Active" (true/false als String)
-  final Map<String, List<String>> _schedule = {
-    'Mo': ['07:00', '23:00', 'true'],
-    'Di': ['07:00', '23:00', 'true'],
-    'Mi': ['07:00', '23:00', 'true'],
-    'Do': ['07:00', '23:00', 'true'],
-    'Fr': ['07:00', '23:00', 'true'],
-    'Sa': ['09:00', '00:00', 'true'],
-    'So': ['10:00', '23:00', 'true'],
-  };
+  // Lokale Kopie zum Bearbeiten
+  late Map<String, List<String>> _schedule;
+
+  @override
+  void initState() {
+    super.initState();
+    // Laden der Daten aus dem Service (Deep Copy, damit wir nicht direkt live ändern)
+    final serviceSchedule = Provider.of<BluetoothService>(context, listen: false).weeklySchedule;
+    _schedule = {
+      for (var k in serviceSchedule.keys)
+        k: List.from(serviceSchedule[k]!)
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF000000), // Komplett schwarz wie im Bild
+      backgroundColor: const Color(0xFF000000),
       appBar: AppBar(
         title: const Text('Wochenplan'),
         backgroundColor: Colors.transparent,
@@ -46,7 +49,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1C1C1E), // iOS Dark Gray
+              color: const Color(0xFF1C1C1E),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -64,7 +67,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                     ),
                     CupertinoSwitch(
                       value: isActive,
-                      activeColor: const Color(0xFF34C759), // iOS Green
+                      activeColor: const Color(0xFF34C759),
                       onChanged: (val) {
                         setState(() {
                           _schedule[day]![2] = val.toString();
@@ -90,7 +93,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _sendScheduleToESP,
+        onPressed: _saveAndSend,
         backgroundColor: const Color(0xFF00D9FF),
         icon: const Icon(Icons.send),
         label: const Text("Speichern"),
@@ -150,7 +153,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
               ),
             ),
             CupertinoButton(
-              child: const Text('OK', style: TextStyle(color: Color(0xFF00D9FF))),
+              child: const Text('Fertig', style: TextStyle(color: Color(0xFF00D9FF))),
               onPressed: () => Navigator.pop(context),
             )
           ],
@@ -159,16 +162,16 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     );
   }
 
-  void _sendScheduleToESP() {
-    final scheduleString = _schedule.entries.map((e) {
-      // Format: Mo:07:00,23:00,1 (1=active, 0=inactive)
-      String active = e.value[2] == 'true' ? '1' : '0';
-      return '${e.key}:${e.value[0]},${e.value[1]},$active';
-    }).join(';');
+  void _saveAndSend() {
+    // Ruft updateSchedule im Service auf -> updated UI & sendet an ESP
+    Provider.of<BluetoothService>(context, listen: false).updateSchedule(_schedule);
 
-    Provider.of<BluetoothService>(context, listen: false).setSchedule(scheduleString);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Plan an Lampe gesendet!')),
+      const SnackBar(
+        content: Text('Wochenplan gespeichert & übertragen!'),
+        backgroundColor: Color(0xFF00D9FF),
+      ),
     );
+    Navigator.pop(context); // Zurück zum Home Screen
   }
 }

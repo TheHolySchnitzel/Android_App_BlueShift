@@ -3,14 +3,14 @@ import 'package:provider/provider.dart';
 
 import '../services/bluetooth_service.dart';
 
-class ColorScreen extends StatefulWidget {
-  const ColorScreen({super.key});
+class ColorTemperatureScreen extends StatefulWidget {
+  const ColorTemperatureScreen({super.key});
 
   @override
-  State<ColorScreen> createState() => _ColorScreenState();
+  State<ColorTemperatureScreen> createState() => _ColorTemperatureScreenState();
 }
 
-class _ColorScreenState extends State<ColorScreen> {
+class _ColorTemperatureScreenState extends State<ColorTemperatureScreen> {
   // Farbtemperatur in Kelvin (z.B. 2700K–6500K)
   double _temp = 4000;
 
